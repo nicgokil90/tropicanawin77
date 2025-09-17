@@ -7,6 +7,7 @@
     <title>Document</title>
 </head>
 <body>
-    <img src="./" alt="">
+   tes123
 </body>
+
 </html>
