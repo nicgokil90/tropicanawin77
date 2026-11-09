@@ -1,6 +1,5 @@
 const WebSocket = require('ws');
 
-// Render memerlukan port dinamis dari process.env.PORT
 const PORT = process.env.PORT || 8080;
 
 const wss = new WebSocket.Server({ 
@@ -9,12 +8,11 @@ const wss = new WebSocket.Server({
 });
 
 const ipConnections = new Map();
-const MAX_CONNS_PER_IP = 10; // Maksimal 10 koneksi aktif per IP
+const MAX_CONNS_PER_IP = 10;
 
 wss.on('connection', (ws, req) => {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-    // 1. Cek Batas Koneksi per IP (Anti-DDoS / Connection Flooding)
     const currentConns = ipConnections.get(ip) || 0;
     if (currentConns >= MAX_CONNS_PER_IP) {
         ws.close(1008, 'Terlalu banyak koneksi dari IP ini.');
@@ -35,20 +33,20 @@ wss.on('connection', (ws, req) => {
         try {
             const data = JSON.parse(message);
             
-            // 2. Tangani registrasi sesi klien/admin
+            // Tangani registrasi sesi klien
             if (data.action === 'register') {
                 ws.clientId = data.client_id;
                 return;
             }
 
-            // 3. Broadcast pesan real-time ke pihak lain yang terhubung
+            // Broadcast pesan real-time ke semua klien/admin yang terhubung
             wss.clients.forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(message);
                 }
             });
         } catch (e) {
-            // Jika pesan berupa teks biasa / non-JSON, abaikan atau broadcast langsung
+            // Abaikan jika format bukan JSON
         }
     });
 });
