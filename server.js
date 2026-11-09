@@ -32,12 +32,24 @@ wss.on('connection', (ws, req) => {
     });
 
     ws.on('message', (message) => {
-        // Broadcast pesan ke klien lain jika diperlukan
-        wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(message);
+        try {
+            const data = JSON.parse(message);
+            
+            // 2. Tangani registrasi sesi klien/admin
+            if (data.action === 'register') {
+                ws.clientId = data.client_id;
+                return;
             }
-        });
+
+            // 3. Broadcast pesan real-time ke pihak lain yang terhubung
+            wss.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(message);
+                }
+            });
+        } catch (e) {
+            // Jika pesan berupa teks biasa / non-JSON, abaikan atau broadcast langsung
+        }
     });
 });
 
